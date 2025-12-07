@@ -27,8 +27,7 @@
 #define VER "1.0"
 
 void wait();
-void serial_read();
-void serial_write();
+void blink (int, int, int);
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
@@ -42,11 +41,86 @@ void setup() {
 
 int mode = 1;
 
+const char CMD_GEN_GNRD = 152; // g[n]rd Read GPIO [n]. Returns a boolean (8 bit with boolean at LSB)
+const char CMD_GEN_GNRA = 160; // g[n]ra Read analog input [n]. Returns N bytes depending on ADC configuration.
+const char CMD_EXTENDED = 255; // Extension. This is followed by the Payload command M56...M67 and an arbitrary Payload. User defined meaning.
+const char CMD_INF_HWMCU = 224; // ihwmcu
+// The MCU Manufacturer and type as defined in KRT/MSPLC specification
+const char HW_MCU_MFR = 6;  // Arduino
+const char HW_MCU_TYPE = 9; // UNO R4 Minima
+
 void loop() {
   if (mode == 0) {
     wait();
   } else if (mode == 1) {
-    serial_read();
+    char cin[8];
+    for (int i = 0; i < 8; i++)
+      cin[i] = 0;
+    int cin_count = 0;
+    while (Serial.available() > 0) {
+      cin[cin_count] = Serial.read();
+      if (++cin_count == 8)
+        break;
+    }
+
+    if ((cin_count) && (cin[0] == CMD_GEN_GNRA)) {
+      // delay(3);
+      unsigned int analog_val = 0;
+      {
+        analog_val = analogRead(PIN_A0);
+      }
+      // Serial Writes
+      Serial.write(CMD_GEN_GNRD);
+      Serial.write(1);
+      Serial.write(analog_val & 0xff);
+      Serial.write((analog_val >> 8) & 0xff);
+      Serial.write(CMD_EXTENDED);
+      //
+    } else if ((cin_count) && (cin[0] == CMD_GEN_GNRD)) {
+      // delay(3);
+      unsigned int digital_val = 0;
+      {
+        if (cin[1] == 0) {
+          digital_val = digitalRead(PIN_A0);
+        } else if (cin[1] == 1) {
+          digital_val = digitalRead(PIN_A1);
+        } else if (cin[1] == 2) {
+          digital_val = digitalRead(PIN_A2);
+        } else if (cin[1] == 3) {
+          digital_val = digitalRead(PIN_A3);
+        } else if (cin[1] == 4) {
+          digital_val = digitalRead(PIN_A4);
+        } else if (cin[1] == 5) {
+          digital_val = digitalRead(PIN_A5);
+        }
+        
+      }
+      // Serial Writes
+      Serial.write(CMD_GEN_GNRD);
+      Serial.write(1);
+      Serial.write(digital_val & 0xff);
+      Serial.write(CMD_EXTENDED);
+      //
+    } else if ((cin_count) && (cin[0] == CMD_INF_HWMCU)) {
+      // delay(3);
+      Serial.write(CMD_INF_HWMCU);
+      Serial.write(CMD_EXTENDED);
+      Serial.write(HW_MCU_MFR);
+      Serial.write(HW_MCU_TYPE);
+    } else if (cin_count) {
+      // NOP
+    }
+  }
+  // Serial.println("Analog Readback Ok"); // Debug
+  blink (1, 1, 30);
+}
+
+void blink (int n, int t1, int t2) {
+  for (int i = 0; i < n; i++) {
+      digitalWrite(LED_BUILTIN, 1);
+      delay(t1);
+      digitalWrite(LED_BUILTIN, 0);
+      delay(t2);
   }
 }
 
@@ -59,23 +133,4 @@ void wait() {
   delay(60);
   digitalWrite(LED_BUILTIN, 0);
   delay(1820);
-}
-
-void serial_write(int vi) {
-  Serial.print(1);
-}
-
-#define CMD_GEN_GNRA 160 // g[n]ra Read analog input [n]. Returns N bytes depending on ADC configuration.
-
-void serial_read() {
-  char cin {0};
-  if (Serial.available()) {
-    cin = Serial.read();
-    if (cin == CMD_GEN_GNRA) {
-      serial_write(1);
-      // Serial.println("Analog Readback Ok"); // Debug
-    } else {
-      // Serial.println("NOP"); // Debug
-    }
-  }
 }
