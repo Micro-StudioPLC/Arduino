@@ -84,6 +84,7 @@ void loop() {
       unsigned int analog_val = 0;
       {
         // Fixme : pins 1-6 : 0xff80 -> 0xff84
+        // Masking. TODO: Check why an 8 bit quantity needs a 32bit LSB Mask to succeed.
         if ((cin[1] & 0x000F) == 0/*0xff80*/) {
           analog_val = analogRead(PIN_A0);
         } else if ((cin[1] & 0x000F) == 1 /*0xff81*/) {
