@@ -36,16 +36,24 @@
 #define VER "1.0"
 
 void wait();
-void blink (int, int, int);
+void blink (int, int, int); /// N, T_on[ms], T_off[ms]
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
-  // Serial init
   Serial.begin(115200);
+  blink(3, 70,50);
+  
+#if 1
+  // Startup sequence & wait
   delay(1000);
   Serial.print("\r\nCLV-DIY-V1:");
   Serial.print(VER);
   Serial.print("\r\n");
+  while (!Serial.available()) {
+    delay(200);
+    Serial.print(".");
+  }
+#endif
 }
 
 int mode = 1;
@@ -73,7 +81,6 @@ void loop() {
     }
 
     if ((cin_count) && (cin[0] == CMD_GEN_GNRA)) {
-      // delay(3);
       unsigned int analog_val = 0;
       {
         analog_val = analogRead(PIN_A0);
@@ -86,7 +93,6 @@ void loop() {
       Serial.write(CMD_EXTENDED);
       //
     } else if ((cin_count) && (cin[0] == CMD_GEN_GNRD)) {
-      // delay(3);
       unsigned int digital_val = 0;
       {
         if (cin[1] == 0) {
@@ -111,7 +117,6 @@ void loop() {
       Serial.write(CMD_EXTENDED);
       //
     } else if ((cin_count) && (cin[0] == CMD_INF_HWMCU)) {
-      // delay(3);
       Serial.write(CMD_INF_HWMCU);
       Serial.write(CMD_EXTENDED);
       Serial.write(HW_MCU_MFR);
