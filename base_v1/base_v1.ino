@@ -24,6 +24,15 @@
  *
  */
 
+/*
+  TODO
+  Clear Serial Link Buffer upon start before any r/w
+  Blink LED Twice upon start
+  Send Infos on Serial Link or
+  Do not send (difff softw check)
+  Robust Sw Hw detection, 3 times, auto detection
+*/
+
 #define VER "1.0"
 
 void wait();
