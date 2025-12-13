@@ -83,7 +83,24 @@ void loop() {
     if ((cin_count) && (cin[0] == CMD_GEN_GNRA)) {
       unsigned int analog_val = 0;
       {
-        analog_val = analogRead(PIN_A0);
+        // Fixme : pins 1-6 : 0xff80 -> 0xff84
+        if ((cin[1] & 0x000F) == 0/*0xff80*/) {
+          analog_val = analogRead(PIN_A0);
+        } else if ((cin[1] & 0x000F) == 1 /*0xff81*/) {
+          analog_val = analogRead(PIN_A1);
+        } else if ((cin[1] & 0x000F) == 2 /*0xff82*/) {
+          analog_val = analogRead(PIN_A2);
+        } else if ((cin[1] & 0x000F) == 3 /*0xff83*/) {
+          analog_val = analogRead(PIN_A3);
+        } else if ((cin[1] & 0x000F) == 4 /*0xff84*/) {
+          analog_val = analogRead(PIN_A4);
+        } else if ((cin[1] & 0x000F) == 5 /*0xff85*/) {
+          analog_val = analogRead(PIN_A5);
+        } else {
+         // analog_val = 0;
+         // analog_val = analogRead(PIN_A0);
+         analog_val = cin[1];
+        }
       }
       // Serial Writes
       Serial.write(CMD_GEN_GNRD);
