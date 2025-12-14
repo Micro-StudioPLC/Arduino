@@ -5,7 +5,7 @@
  *  Created:     6/12/2025
  *  Description: Micro-StudioPLC CLV-DIY-V1 Source Code - Open-Source
  *  Contact:     jfsimon@startmail.com
- *
+ *  License:     2025 Chrysalide Engineering — Licensed under the GNU General Public License v3.0
  ******************************************************************************/
  /*
  * Computer Conncected Digital Multi-Meter ref CLV-DIY-V1
@@ -67,6 +67,7 @@ const char HW_MCU_MFR = 6;  // Arduino
 const char HW_MCU_TYPE = 9; // UNO R4 Minima
 
 void loop() {
+  static int serial_in = 0;
   if (mode == 0) {
     wait();
   } else if (mode == 1) {
@@ -75,6 +76,7 @@ void loop() {
       cin[i] = 0;
     int cin_count = 0;
     while (Serial.available() > 0) {
+      serial_in = 1;
       cin[cin_count] = Serial.read();
       if (++cin_count == 8)
         break;
@@ -85,7 +87,7 @@ void loop() {
       {
         // Fixme : pins 1-6 : 0xff80 -> 0xff84
         // Masking. TODO: Check why an 8 bit quantity needs a 32bit LSB Mask to succeed.
-        if ((cin[1] & 0x000F) == 0/*0xff80*/) {
+        if ((cin[1] & 0x000F) == 0 /*0xff80*/) {
           analog_val = analogRead(PIN_A0);
         } else if ((cin[1] & 0x000F) == 1 /*0xff81*/) {
           analog_val = analogRead(PIN_A1);
@@ -115,18 +117,19 @@ void loop() {
       {
         if (cin[1] == 0) {
           digital_val = digitalRead(PIN_A0);
-        } else if (cin[1] == 1) {
+        } else if ((cin[1] & 0x000F) == 1) {
           digital_val = digitalRead(PIN_A1);
-        } else if (cin[1] == 2) {
+        } else if ((cin[1] & 0x000F) == 2) {
           digital_val = digitalRead(PIN_A2);
-        } else if (cin[1] == 3) {
+        } else if ((cin[1] & 0x000F) == 3) {
           digital_val = digitalRead(PIN_A3);
-        } else if (cin[1] == 4) {
+        } else if ((cin[1] & 0x000F) == 4) {
           digital_val = digitalRead(PIN_A4);
-        } else if (cin[1] == 5) {
+        } else if ((cin[1] & 0x000F) == 5) {
           digital_val = digitalRead(PIN_A5);
+        } else {
+          digital_val = 0;
         }
-        
       }
       // Serial Writes
       Serial.write(CMD_GEN_GNRD);
@@ -144,7 +147,10 @@ void loop() {
     }
   }
   // Serial.println("Analog Readback Ok"); // Debug
-  blink (1, 1, 30);
+  if (serial_in) {
+    serial_in = 0;
+    blink (1, 1, 1);
+  }
 }
 
 void blink (int n, int t1, int t2) {
